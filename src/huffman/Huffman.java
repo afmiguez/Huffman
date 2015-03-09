@@ -18,7 +18,7 @@ public class Huffman {
     private static Node root;
     private static String compressedCode = "";
     private static String uncompressedCode = "";
-    private static ST<Character, String> table =null;
+    private static ST<Character, String> table = null;
     private static ST<String, Character> LUT = null;
 
     public static ST<Character, String> getTable() {
@@ -40,11 +40,11 @@ public class Huffman {
     // Huffman trie node
     private static class Node implements Comparable<Node> {
 
-        private final char ch;
+        private final String ch;
         private final int freq;
         private final Node left, right;
 
-        Node(char ch, int freq, Node left, Node right) {
+        Node(String ch, int freq, Node left, Node right) {
             this.ch = ch;
             this.freq = freq;
             this.left = left;
@@ -61,13 +61,23 @@ public class Huffman {
         public int compareTo(Node that) {
             return this.freq - that.freq;
         }
+
+        @Override
+        public String toString() {
+            return "Node{" + "ch=" + ch + ", freq=" + freq + '}';
+        }
+
     }
 
     public static void compress(String s) {
+        //reset the static Strings
         compressedCode = "";
         uncompressedCode = "";
-        table=new ST<>();
-        LUT=new ST<>();
+
+        //create new symbol tables
+        table = new ST<>();
+        LUT = new ST<>();
+
         // read the input
         char[] input = s.toCharArray();
 
@@ -107,16 +117,16 @@ public class Huffman {
         MinPQ<Node> pq = new MinPQ<Node>();
         for (char i = 0; i < R; i++) {
             if (freq[i] > 0) {
-                pq.insert(new Node(i, freq[i], null, null));
+                pq.insert(new Node("" + i, freq[i], null, null));
             }
         }
 
         // special case in case there is only one character with a nonzero frequency
         if (pq.size() == 1) {
             if (freq['\0'] == 0) {
-                pq.insert(new Node('\0', 0, null, null));
+                pq.insert(new Node("" + '\0', 0, null, null));
             } else {
-                pq.insert(new Node('\1', 0, null, null));
+                pq.insert(new Node("" + '\1', 0, null, null));
             }
         }
 
@@ -124,7 +134,8 @@ public class Huffman {
         while (pq.size() > 1) {
             Node left = pq.delMin();
             Node right = pq.delMin();
-            Node parent = new Node('\0', left.freq + right.freq, left, right);
+            //Node parent = new Node('\0', left.freq + right.freq, left, right);
+            Node parent = new Node("(" + left.ch + "," + right.ch + ")", left.freq + right.freq, left, right);
             pq.insert(parent);
         }
         return pq.delMin();
@@ -138,7 +149,6 @@ public class Huffman {
                 table.put((char) i, st[i]);
             }
         }
-
         return st;
     }
 
@@ -148,7 +158,7 @@ public class Huffman {
             buildCode(st, x.left, s + '0');
             buildCode(st, x.right, s + '1');
         } else {
-            st[x.ch] = s;
+            st[x.ch.charAt(0)] = s;
         }
     }
 
@@ -158,9 +168,8 @@ public class Huffman {
         int length = compressedCode.length();
 
         // decode using the Huffman trie
-//        for (int i = 0; i < length; i++) {
-        int i=0;
-        while(i<length){
+        int i = 0;
+        while (i < length) {
             Node x = root;
             while (!x.isLeaf()) {
                 boolean bit = false;
@@ -188,7 +197,6 @@ public class Huffman {
     }
 
     public static String[] tableToString() {
-
         Iterable<Character> it = table.keys();
         Iterator iterator = it.iterator();
         int count = 0;
@@ -252,7 +260,6 @@ public class Huffman {
         for (int i = 0; i < length; i++) {
             LUT.put(getBitCombination(i, L), ',');
         }
-
         Iterable<Character> it = table.keys();
         Iterator iterator = it.iterator();
         while (iterator.hasNext()) {
@@ -304,28 +311,53 @@ public class Huffman {
         }
     }
 
+    public static void printTrie(Node node) {
+        if (node != null) {
+            printTrie(node.left);
+            System.out.println(node);
+            printTrie(node.right);
+        }
+    }
+
+    public static Iterable<String> levelOrder() {
+        Queue<String> keys = new Queue<>();
+        Queue<Node> queue = new Queue<Node>();
+        queue.enqueue(root);
+        while (!queue.isEmpty()) {
+            Node x = queue.dequeue();
+            if (x == null) {
+                continue;
+            }
+            keys.enqueue(x.ch);
+            queue.enqueue(x.left);
+            queue.enqueue(x.right);
+        }
+        return keys;
+    }
+
     public static void main(String[] args) {
 
         compress("FCP*FCP*FCP*FCP*FCP*FCP*FFFFFFFFFCiiiii");
-        //compress("ABRACADABRA");
-        System.out.println(compressedCode);
+//        System.out.println(compressedCode);
         expand();
-        System.out.println(uncompressedCode);
-        printTable();
-        printTableToString();
+//        System.out.println(uncompressedCode);
+//        printTable();
+//        printTableToString();
         buildLUT();
-//        System.out.println(getL());
-        printLUT();
-        
+//        printLUT();
+//        printTrie(root);
+        System.out.println(levelOrder());
+
         compress("ABRACADABRA");
-        System.out.println(compressedCode);
+//        System.out.println(compressedCode);
         expand();
-        System.out.println(uncompressedCode);
-        printTable();
-        printTableToString();
+//        System.out.println(uncompressedCode);
+//        printTable();
+//        printTableToString();
         buildLUT();
 //        System.out.println(getL());
-        printLUT();
+//        printLUT();
+//        printTrie(root);
 
     }
 
